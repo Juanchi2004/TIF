@@ -10,7 +10,7 @@ info = Info(ch_names=canales,
             experimenter="ETCAHRT. Juan Luis",
             subject_info={"edad": 21, "sexo": "M"})
 
-with open("Datasets/EEG/s00.csv/s00.csv", "r") as f:
+with open("Datasets/EEG/s00.csv", "r") as f:
     eeg = [fila.split(",") for fila in f.read().split("\n")]
     del eeg[-1] #Deleteo la ultima fila porque es un caracter vacío
 
@@ -19,8 +19,8 @@ eeg = np.array(eeg, dtype= float)
 # #   - 19 canales (o columnas)
 # #   - 3100 muestras (o filas)
 
-# eeg = eeg.T
-
+eeg = eeg.T
+# print(eeg.shape)
 # print(eeg[:,0].shape)
 # print(eeg[0,:].shape)
 # print(type(eeg[5,5]))
@@ -52,7 +52,7 @@ eeg = np.array(eeg, dtype= float)
 # info.rename_channels(cambio_canales)
 
 # print(info["ch_names"])
-print(info.items())
+# print(info.items())
 print(len(info))
 
 # signal = RawSignal(eeg)

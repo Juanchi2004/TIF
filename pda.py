@@ -85,6 +85,7 @@ class Info():
                 self.description:str = description #Texto de descripción
                 self.experimenter:str = experimenter #Texto del autor del experimento
                 self.subject_info:dict = subject_info #diccionario con datos del autor del experimento (edad, sexo, etc)
+
                 
         except ValueError as vErr:
             raise (f"Las longitudes de los canales *ch_names* y *ch_types* es distitno", vErr)
@@ -101,7 +102,7 @@ class Info():
         #preguntar a Lucas que es lo que quiera implementar.
         # Devuelve la cantidad de elementos almacenados.
 
-        return len([dato[1] for dato in self.__dict__.items() if dato[1] != "No data" or dato[1] != "unknown" or not isinstance(obj = dato[1], class_or_tuple = None)])
+        return len(self.__dict__.keys())
 
     def get(self, key):
         """
