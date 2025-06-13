@@ -79,4 +79,3 @@ print(signal2[0] , signal.data[0,0])
 # s2, tiempo = signal.get_data(times=True)
 
 
-

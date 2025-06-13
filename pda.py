@@ -137,3 +137,4 @@ class Info():
             else:
                 raise ValueError (f"El canal ({key}) no se encuentra dentro de los canales") 
         return True
+

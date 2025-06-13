@@ -31,10 +31,24 @@ class RawSignal():
         self.info = info
         self.anotaciones = anotaciones
         
-    def get_data(self, picks:list | int = None, start=0, stop=0 , reject=None, times=False):
+    def get_data(self, picks:list | tuple | int | str = None, start=0, stop=0 , reject=None, times=False):
         """
-        
-        Si stop == 0 retorna los primeros 10 segundos"""
+        Argumentos:
+        ----
+        - picks: Se seleccionan los canales existentes dentro del objeto RawSignal.data
+        - start: comienzo de la muestra
+        - stop: fin de la muestra 
+            - Si stop <= 0 retorna los primeros 10 segundos
+        - reject: elimina los canales los cuales superen el umbral propuesto
+        - times: habilita que adicionalmente se retorne un vector que contiene un enumerado del largo [start : stop]
+        Return:
+        ----
+        - Si times = True:
+            - np.ndarray
+            - Un vector con el largo de [start : stop]
+        - Si times = False:
+            - np.ndarray
+        """
         
         new_data = self.data.copy()
         
