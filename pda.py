@@ -138,3 +138,7 @@ class Info():
                 raise ValueError (f"El canal ({key}) no se encuentra dentro de los canales") 
         return True
 
+    def copy(self):
+        """Retorna un objeto distinto con las mismas caracteristicas que el original"""
+
+        return Info(self.ch_names, self.ch_types, self.bads, self.sfreq, self.description, self.experimenter, self.subject_info)

@@ -64,18 +64,24 @@ signal = RawSignal(eeg, info=info)
 
 # eeg2 = eeg["",]
 # eeg2.shape
-canal = "c1"
+# canal = "c1"
 # print(signal.data[canal,:].max(axis=1))
 # print(signal.data[canal,:].min(axis=1))
 # print((signal.data[canal,:].max(axis=1) - signal.data[canal,:].min(axis=1)))
 
-signal2 , t = signal.get_data(picks=canal, times= True)
+# signal2 , t = signal.get_data(picks=canal, times= True)
 
-print(signal2.shape)
-print(signal2[:10])
-print(info.ch_names[:5])
-print(signal2[0] == signal.data[0,0])
-print(signal2[0] , signal.data[0,0])
+# print(signal2.shape)
+# print(signal2[:10])
+# print(info.ch_names[:5])
+# print(signal2[0] == signal.data[0,0])
+# print(signal2[0] , signal.data[0,0])
 # s2, tiempo = signal.get_data(times=True)
 
-
+print(signal.data.shape)
+signal2 = signal.drop_chanel("asd")
+print(signal2.data.shape)
+print(signal2.info["ch_names"])
+print(signal.info.ch_names)
+print(signal.info["ch_types"])
+print(signal2.info.ch_types)

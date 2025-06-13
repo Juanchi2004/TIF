@@ -20,7 +20,7 @@ class RawSignal():
         
 
         if len(data.shape) != 2:
-            raise ValueError (f"El set de datos no tiene dimensiones 2D (matriz)")
+            raise ValueError (f"El set de datos no tiene dimensiones 2D (matriz)", data.shape)
         
         if first_samp not in range(len(data[0,:])):
             raise ValueError (f"La muestra: {first_samp} está fuera de rango")
@@ -33,6 +33,8 @@ class RawSignal():
         
     def get_data(self, picks:list | tuple | int | str = None, start=0, stop=0 , reject=None, times=False):
         """
+        # Este método sirve para obtener una cantidad de muestras de la señal.
+        
         Argumentos:
         ----
         - picks: Se seleccionan los canales existentes dentro del objeto RawSignal.data
@@ -49,6 +51,7 @@ class RawSignal():
         - Si times = False:
             - np.ndarray
         """
+        
         
         new_data = self.data.copy()
         
@@ -76,3 +79,36 @@ class RawSignal():
             return new_data[picks,start:stop], np.arange(new_data.shape[1])
             
         return new_data[picks,start:stop]
+
+    def drop_chanel(self, ch_names) -> "RawSignal":
+        """
+        Elimina uno o más canales a partir de *ch_names*.
+
+        Parameters
+        ----------
+            ch_names : array like
+                - Nombre de los canales a eliminar.
+        
+        Returns
+        ----------
+            - RawSignal        
+        """
+        #para hacerlo un poquito mas corto creo la variable.
+        if isinstance(ch_names, (tuple, list)):
+            ch_names = [self.info.ch_names.index(canal) for canal in self.info.ch_names if canal not in ch_names]
+        elif isinstance(ch_names, (int, str)) and ch_names in self.info.ch_names:
+            ch_names = [indice for indice, canal in enumerate(self.info.ch_names) if ch_names != canal]
+        else:
+            raise TypeError ("Los datos ingresados son erroneos.", ch_names)
+        # info2 = self.info
+        info2 = self.info.copy()
+        info2.ch_names = [info2.ch_names[indice] for indice in ch_names]
+        info2.ch_types = [info2.ch_types[0]] * len(info2.ch_names)
+        return RawSignal(data=np.squeeze(self.data[[ch_names]], axis=0), #no entiendo por qeu razón me agrega un eje mas a la matriz
+                         sfreq=self.sfreq,
+                         first_samp=self.first_samp,
+                         info=info2,
+                         anotaciones=self.anotaciones)
+    
+    
+        
