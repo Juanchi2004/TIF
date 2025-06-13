@@ -3,10 +3,10 @@ from RawSignal import RawSignal
 import numpy as np
 import matplotlib.pyplot as plt
 
-canales=[i+1 for i in range(3)]
+canales=[i+1 for i in range(19)]
 
 info = Info(ch_names=canales,
-            ch_types=["eeg"]*len(canales), 
+            ch_types="eeg", 
             experimenter="ETCAHRT. Juan Luis",
             subject_info={"edad": 21, "sexo": "M"})
 
@@ -43,22 +43,39 @@ eeg = eeg.T
 
 # print(info["ch_names"])
 
-# cambio_canales = {
-#     1: "c1",
-#     2: "Cz",
-#     3: "asd"
-# }
+cambio_canales = {
+    1: "c1",
+    2: "Cz",
+    3: "asd"
+}
 
-# info.rename_channels(cambio_canales)
+info.rename_channels(cambio_canales)
 
-# print(info["ch_names"])
+# print(info["ch_types"])
 # print(info.items())
-print(len(info))
 
-# signal = RawSignal(eeg)
+# print(len(info))
+
+signal = RawSignal(eeg, info=info)
 
 # print(signal.data.shape)
 
+
+
+# eeg2 = eeg["",]
+# eeg2.shape
+canal = "c1"
+# print(signal.data[canal,:].max(axis=1))
+# print(signal.data[canal,:].min(axis=1))
+# print((signal.data[canal,:].max(axis=1) - signal.data[canal,:].min(axis=1)))
+
+signal2 , t = signal.get_data(picks=canal, times= True)
+
+print(signal2.shape)
+print(signal2[:10])
+print(info.ch_names[:5])
+print(signal2[0] == signal.data[0,0])
+print(signal2[0] , signal.data[0,0])
 # s2, tiempo = signal.get_data(times=True)
 
 

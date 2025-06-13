@@ -40,7 +40,7 @@ class Info():
     """
     
     
-    def __init__(self, ch_names = None, ch_types="unknown", bads=None, sfreq=512, description=None, experimenter="No data", subject_info=None):
+    def __init__(self, ch_names:list = None, ch_types:list | str ="unknown", bads=None, sfreq=512, description=None, experimenter="No data", subject_info=None):
         """
         Genera un objeto Info().
         
@@ -74,7 +74,8 @@ class Info():
                 Si **ch_names** y **ch_types** no tienen la misma longitud.
         
         """
-
+        if isinstance(ch_types, str):
+            ch_types = [ch_types]*len(ch_names)
         try:
             if len(ch_names) == len(ch_types):
                 
@@ -88,7 +89,7 @@ class Info():
 
                 
         except ValueError as vErr:
-            raise (f"Las longitudes de los canales *ch_names* y *ch_types* es distitno", vErr)
+            raise (f"Las longitudes de las listas *ch_names* y *ch_types* es distitno", vErr)
        
     def  __contains__(self, item):
         # Permite verificar si una clave está en el objeto.
@@ -99,7 +100,7 @@ class Info():
         return getattr(self, key)
 
     def __len__(self):
-        #preguntar a Lucas que es lo que quiera implementar.
+        # Preguntar a Lucas que es lo que quiera implementar.
         # Devuelve la cantidad de elementos almacenados.
 
         return len(self.__dict__.keys())

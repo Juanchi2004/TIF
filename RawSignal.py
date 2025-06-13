@@ -31,24 +31,34 @@ class RawSignal():
         self.info = info
         self.anotaciones = anotaciones
         
-    def get_data(self, picks = None, start=0, stop=0 , reject=None, times=False):
-        #Si stop == 0 retorna los primeros 10 segundos
+    def get_data(self, picks:list | int = None, start=0, stop=0 , reject=None, times=False):
+        """
         
-        new_data = self.data
-
-        if picks == None and start == 0 and stop == 0 and reject == None and times == None:
-            return RawSignal(data=new_data[:self.sfreq*10,:], sfreq= self.sfreq, first_samp= self.first_samp, info= self.info, anotaciones= self.anotaciones)
-
-        if not isinstance(picks, None):
-            new_data = new_data[picks, start: stop]
+        Si stop == 0 retorna los primeros 10 segundos"""
         
-        if not isinstance(reject, None):
-            # new_data = new_data #Consultar a Lucas que onda con esto, si es una especie de filtro por frecuencia o que onda.
-            pass
+        new_data = self.data.copy()
+        
+        if picks == None:
+            picks = self.info.ch_names
+        elif isinstance(picks, (int, str)) and picks in self.info.ch_names:
+            picks = self.info.ch_names.index(picks)
+        elif isinstance(picks, (tuple, list)):
+            picks = [self.info.ch_names.index(canal) for canal in picks if canal in self.info.ch_names]
+        else:
+            raise ValueError ("Ocurrió algo al realizar el ajuste de 'picks'", picks)
+        
+        if start < 0:
+            raise ValueError (f"El inicio de la señal no puede ser negativo. start = {start}")
+        
+        if stop <= 0:
+            stop = self.sfreq * 10
+        elif stop > new_data.shape[1]:
+            raise ValueError (f"El valor **stop** está por fuera del rango de la señal. stop = {stop} - N° muestras: {new_data.shape[1]}")
+        
+        if reject != None:
+            picks = [canal for canal in picks if (abs(new_data[canal,:].max() - new_data[canal,:].min())) < reject]
 
         if times:
-            return RawSignal(data=new_data, sfreq= self.sfreq, first_samp= self.first_samp, info= self.info, anotaciones= self.anotaciones), np.arange(len(new_data))
+            return new_data[picks,start:stop], np.arange(new_data.shape[1])
             
-
-
-        return RawSignal(data=new_data, sfreq= self.sfreq, first_samp= self.first_samp, info= self.info, anotaciones= self.anotaciones)
+        return new_data[picks,start:stop]
