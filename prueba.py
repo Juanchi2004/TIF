@@ -19,7 +19,8 @@ eeg = np.array(eeg, dtype= float)
 # #   - 19 canales (o columnas)
 # #   - 3100 muestras (o filas)
 
-eeg = eeg.T
+eeg = eeg.T #la traspuesta invierte columnas por filas
+
 # print(eeg.shape)
 # print(eeg[:,0].shape)
 # print(eeg[0,:].shape)
@@ -78,10 +79,30 @@ signal = RawSignal(eeg, info=info)
 # print(signal2[0] , signal.data[0,0])
 # s2, tiempo = signal.get_data(times=True)
 
-print(signal.data.shape)
-signal2 = signal.drop_chanel("asd")
-print(signal2.data.shape)
-print(signal2.info["ch_names"])
-print(signal.info.ch_names)
-print(signal.info["ch_types"])
-print(signal2.info.ch_types)
+
+######### Drop Chanel #########
+
+# print(signal.data.shape)
+# signal2 = signal.drop_chanel("asd")
+# print(signal2.data.shape)
+# print(signal2.info["ch_names"])
+# print(signal.info.ch_names)
+# print(signal.info["ch_types"])
+# print(signal2.info.ch_types)
+
+###############################
+############ Crop ############# 
+
+# signal30 = signal.crop(tmax=30)
+# signal60 = signal.crop(tmax=60)
+
+# print(signal30.data.shape)
+# print(signal60.data.shape)
+
+# print(signal30.tiempo())
+# print(signal60.tiempo())
+
+###############################
+########### describe ##########
+
+ 
