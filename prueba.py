@@ -105,4 +105,5 @@ signal = RawSignal(eeg, info=info)
 ###############################
 ########### describe ##########
 
- 
+dataframe = signal.describe() 
+print(dataframe.head())

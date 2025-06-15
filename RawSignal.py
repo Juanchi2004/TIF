@@ -154,7 +154,7 @@ class RawSignal():
 
         return RawSignal(data, self.sfreq, self.first_samp, info, self.anotaciones)
 
-    def describe(self):
+    def describe(self) -> "pd.DataFrame":
         """
         Crea un ***DataFrame*** con todos los canales dentro del objeto RawSignal.
         --------
@@ -172,7 +172,16 @@ class RawSignal():
         DataFrame de todos los datos de todos los canales.   
         """
         try:
-            pass
+            dataframe = {
+                "Name": self.info.ch_names,
+                "Type": self.info.ch_types,
+                "Min": self.data.min(axis=1),
+                "Q1": np.percentile(self.data, q=25, axis=1),
+                "Mediana": np.percentile(self.data, q=50, axis=1),
+                "Q3": np.percentile(self.data, q=75, axis=1),
+                "Max": self.data.max(axis=1)
+            }
+            return pd.DataFrame(data=dataframe) #Para que el indice comience en 1: index= range(1, len(self.info.ch_names)+1)
         except ValueError as vErr:
-            pass
-        pass
+            raise ("Ocurrió un error al realizar la acción", vErr)
+
