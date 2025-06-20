@@ -105,5 +105,26 @@ signal = RawSignal(eeg, info=info)
 ###############################
 ########### describe ##########
 
-dataframe = signal.describe() 
-print(dataframe.head())
+# dataframe = signal.describe() 
+# print(dataframe.head())
+
+###############################
+############ picks ############
+
+
+###############################
+########## get item ###########
+# canal, tiempo = signal["c1", 10:100]
+
+# print(canal.shape, len(tiempo.shape))
+
+# c, t= signal[["c1",18]]
+# print(len(c.shape), t.shape)
+
+###############################
+############ picks ############
+
+signal_picks = signal.pick(("c1", 18))
+
+print(signal_picks.info["ch_names"])
+print(signal_picks.data.shape)

@@ -56,16 +56,21 @@ class RawSignal():
         new_data = self.data.copy()
         
         if picks == None:
-            picks = list(range(len(self.info.ch_names)))
+            picks = list(range(len(self.info.ch_names))) 
         elif isinstance(picks, (int, str)) and picks in self.info.ch_names:
             picks = self.info.ch_names.index(picks)
         elif isinstance(picks, (tuple, list)):
             picks = [self.info.ch_names.index(canal) for canal in picks if canal in self.info.ch_names]
         else:
             raise ValueError ("Ocurrió algo al realizar el ajuste de 'picks'", picks)
-        
-        if start < 0:
+        # Finalmente la variable **picks** tiene los indices de los canales seleccionados.
+
+        if isinstance(start, int) and start < 0:
             raise ValueError (f"El inicio de la señal no puede ser negativo. start = {start}")
+        
+
+        start = 0 if start == None else start
+        stop = new_data.shape[1] if stop == None else stop
         
         if stop <= 0:
             stop = self.sfreq * 10
@@ -75,10 +80,15 @@ class RawSignal():
         if reject != None:
             picks = [canal for canal in picks if (abs(new_data[canal,:].max() - new_data[canal,:].min())) < reject]
 
+        new_data = new_data[picks,start:stop]
+
+        if len(new_data.shape) == 1:
+            new_data = new_data[:,np.newaxis].T
+
         if times:
-            return new_data[picks,start:stop], np.arange(new_data.shape[1])
+            return new_data, np.arange((stop-start))
             
-        return new_data[picks,start:stop]
+        return new_data
 
     def drop_chanel(self, ch_names) -> "RawSignal":
         """
@@ -184,4 +194,88 @@ class RawSignal():
             return pd.DataFrame(data=dataframe) #Para que el indice comience en 1: index= range(1, len(self.info.ch_names)+1)
         except ValueError as vErr:
             raise ("Ocurrió un error al realizar la acción", vErr)
+
+    def filter(self, l_freq, h_freq, notch_freq=50., order=4)->"RawSignal":
+        """
+        Aplica un filtro pasabanda y un filtro notch.\n
+        Retorna una nueva instancia de *RawSignal* con los datos filtrados
+        
+        ***Parameters***
+        ----------------
+        l_freq : float
+            -  Frecuencia de corte baja (Hz) para el filtro pasabanda.
+        h_freq : float
+            -  Frecuencia de corte alta (Hz) para el filtro pasabanda.
+        notch_freq : float, optional
+            -  Frecuencia del filtro notch para eliminar ruido (por defecto 50 Hz).
+        order : int, optional
+            - Orden del filtro (por defecto 4).
+        fir_window : str, optional
+            -  Tipo de ventana para el diseño del filtro FIR (por defecto "hamming").
+        
+        ***Returns***
+        -------------
+        RawSignal
+            Nueva instancia de 'RawSignal' con los datos filtrados.
+
+        ***Raises***
+        ------------
+        ValueError
+            - Si los valores de 'l_freq' o 'h_freq' no son válidos.
+        ValueError
+            - Si el valor de 'notch_freq' no es positivo.
+        """
+        
+
+
+        pass
+
+    def pick(self, picks)->"RawSignal":
+        """
+        Retorna un subset de los canales seleccionados.
+
+        Parameters
+        ----------
+
+        picks : str | array_like | slice
+            Canales a seleccionar. Puede ser:
+            - str : Nombre de un solo canal.
+            - list[str] : Lista de nombres de canales.
+            - list[int] : Lista de nombres de canales.
+        
+        Retunrs
+        -------
+        RawSignal
+            Nueva instancia de ***RawSignal*** con el subset de canales elegidos.
+
+        Raises
+        ------
+        ValueError
+            Si el canal especificado no existe.
+        ValueError
+            Si el índice está afuera del rango
+        """
+        info= self.info.copy()
+        #implementar:
+        #nueva_anotacion = self.anotaciones.copy()
+        
+        if isinstance(picks, str):
+            info.ch_names = [picks] if picks in info.ch_names else ValueError ("El canal no se encontró", picks)
+            info.ch_types = info.ch_types[info.ch_names.index(picks)]
+            return RawSignal(data=self.get_data(picksstart=0, stop=self.data.shape[1]), sfreq=self.sfreq, first_samp=self.first_samp, info=info, anotaciones=self.anotaciones)
+        elif isinstance(picks, (list, tuple, np.ndarray)):
+            info.ch_names = [canal for canal in picks if canal in info.ch_names]
+            info.ch_types = [info.ch_types[0]] * len(info.ch_names)
+            return RawSignal(data=self.get_data(picks, start=0, stop=self.data.shape[1]), sfreq=self.sfreq, first_samp=self.first_samp, info=info, anotaciones=self.anotaciones)
+
+    def __getitem__(self, key):
+        if isinstance(key, tuple) and len(key) == 2:
+            canales, tiempo = key
+            if isinstance(tiempo, slice):
+                return self.get_data(picks=canales, start=tiempo.start, stop=tiempo.stop, times=True)
+            else:
+                raise TypeError ("No se pudo realizar la acción de slice", tiempo)
+        elif isinstance(key, (str, int, list)):
+            return self.get_data(picks=key, times=True)
+
 
