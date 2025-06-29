@@ -143,14 +143,14 @@ print(len(c.shape), t.shape, signal.tiempo())
 ###############################
 ###### esoectro_potencias #####
 
-# frecuencias1, psd1 = c1.espectro_potencias(metodo = "fft",plot=True)
+# frecuencias1, psd1 = c1.espectro_potencias(plot=True)
 
 ###############################
 ############ filter ###########
 
 # c1filtrado = c1.filter(l_freq=1, h_freq=60)
 
-# frecuencia2, psd2 = c1filtrado.espectro_potencias(metodo = "fft", plot=True)
+# frecuencia2, psd2 = c1filtrado.espectro_potencias(plot=True)
 
 # print(frecuencias1, psd1.shape)
 # print(frecuencia2, psd2.shape)

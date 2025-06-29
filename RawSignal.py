@@ -257,7 +257,6 @@ class RawSignal():
         
         return RawSignal(data=new_data, sfreq=self.sfreq, first_samp=self.first_samp, info=self.info, anotaciones=self.anotaciones)
 
-
     def pick(self, picks)->"RawSignal":
         """
         Retorna un subset de los canales seleccionados.
@@ -350,6 +349,21 @@ class RawSignal():
             axes.plot(x, y[0,:], color = self._color_random_hex(), label = picks)
             axes.grid(visible=True, alpha = 0.35)
 
+        if show_anotaciones:
+            try:
+                eventos = self.anotaciones.get_annotations()
+            except:
+                raise ValueError ("Ocurrió un error con el objeto *Anotaciones*")
+                
+            duration = duration / self.sfreq
+            for _,fila in eventos.iterrows():
+                for ax in axes:
+                    if fila["onset"] < duration:
+                        ax.axvline(fila["onset"], color = "r", linestyle = "--")
+                        ax.text(fila["onset"], 1.0, fila["event_id"], rotation=90, color = "r", va='bottom')
+                    else: 
+                        break
+
         fig.tight_layout()
         fig.legend()
         plt.show()
@@ -368,7 +382,7 @@ class RawSignal():
         elif isinstance(key, (str, int, list)):
             return self.get_data(picks=key, times=True)
 
-    def espectro_potencias(self, metodo='welch', nperseg : int = 256, plot = False):
+    def espectro_potencias(self, metodo='welch', nperseg : int = 512, plot = False):
         """
         Calcula el espectro de potencias de la señal.
         
@@ -385,12 +399,12 @@ class RawSignal():
 
         if metodo == 'welch':
             # Usar el método de Welch
-            frecuencias, psd = welch(self.data, fs=self.sfreq, nperseg=nperseg, axis=1, return_onesided=True)
+            frecuencias, spectro = welch(self.data, fs=self.sfreq, nperseg=nperseg, axis=1, return_onesided=True)
 
             if plot:
                 plt.figure(figsize=(10, 6))
                 for i in range(n_canales):
-                    plt.semilogy(frecuencias, psd[i], label=f'Canal {i+1}')
+                    plt.semilogy(frecuencias, spectro[i], label=f'Canal {i+1}')
                 plt.xlabel('Frecuencia (Hz)')
                 plt.ylabel('Densidad Espectral de Potencia (V²/Hz)')
                 plt.title('Espectro de Potencias (Método de Welch)')
@@ -398,19 +412,19 @@ class RawSignal():
                 plt.legend()
                 plt.show()
 
-            return frecuencias, psd
+            return frecuencias, spectro
         
         elif metodo == 'fft':
             # Calcular FFT directa
             
             frecuencias = np.fft.rfftfreq(n_muestras, d=1/self.sfreq)  # Frecuencias positivas
             fft_result = np.fft.rfft(self.data, axis=1)   # FFT de cada canal
-            psd = np.abs(fft_result)**2 / n_muestras           # Espectro de potencias (normalizado)
+            spectro = np.abs(fft_result)**2 / n_muestras           # Espectro de potencias (normalizado)
             
             if plot:
                 plt.figure(figsize=(10, 6))
                 for i in range(n_canales):
-                    plt.plot(frecuencias, 10 * np.log10(psd[i]), label=f'Canal {i+1}')
+                    plt.plot(frecuencias, 10 * np.log10(spectro[i]), label=f'Canal {i+1}')
                 plt.xlabel('Frecuencia (Hz)')
                 plt.ylabel('Potencia (dB/Hz)')
                 plt.title('Espectro de Potencias (dB)')
@@ -418,7 +432,7 @@ class RawSignal():
                 plt.legend()
                 plt.show()
             
-            return frecuencias, psd
+            return frecuencias, spectro
         
         else:
             raise ValueError("Método debe ser 'welch' o 'fft'")

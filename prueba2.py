@@ -2,33 +2,30 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from RawSignal import RawSignal
+from EEGsignal import EEGSignal
+from ClaseAnotaciones import Anotaciones
 from pda import Info
 
-data = np.load("Datasets/EEG/eeg_signal.np", "r")
+canales=[i+1 for i in range(62)]
 
-# print(len(data[0,:])) #Columnas
-# print(len(data[:,0])) #Filas
+info = Info(ch_names=canales,
+            ch_types="eeg", 
+            experimenter="ETCAHRT. Juan Luis",
+            subject_info={"edad": 21, "sexo": "M"})
 
-with open("C:/Users/juanc/Downloads/ecg.csv/ecg.csv") as f:
-    ekg = [fila.split(",") for fila in f.read().split("\n")]
-    del ekg[-1]
-ekg = np.array(ekg, dtype= float).T
-print(ekg.shape)
-# print(ekg.shape)
-# plt.figure(figsize = (50,50))
-# plt.plot(np.arange(ekg.shape[0]), ekg[:,0:3])
-# plt.show()
+# with open("Datasets/EEG/s00.csv", "r") as f:
+#     eeg = [fila.split(",") for fila in f.read().split("\n")]
+#     del eeg[-1] #Deleteo la ultima fila porque es un caracter vacío
 
-canales=list(range(ekg.shape[0]))
+# eeg = np.array(eeg, dtype= float).T
 
-info = Info(
-    ch_names=canales,
-    ch_types="ECG",
-    sfreq=125
-)
 
-signal_ecg = RawSignal(ekg, sfreq=125, info=info)
-df=signal_ecg.describe()
-print(signal_ecg.tiempo())
-# print(df)
-signal_ecg.plot(picks=list(range(120, 141, 2)), duration=5)
+eeg = np.load("Datasets/EEG/eeg_signal.np", "r")
+print(eeg.shape)
+
+anotacion = Anotaciones()
+anotacion.load("Datasets/EEG/eventos_ejemplo.csv")
+
+
+signal = RawSignal(data= eeg, info= info)
+
