@@ -5,7 +5,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import scipy.signal as signal
+from scipy.signal import butter, sosfiltfilt, welch
 from pda import Info
 
 class RawSignal():
@@ -235,7 +235,7 @@ class RawSignal():
             raise TypeError ("Los tipos de variable de *l_freq* o *h_freq* no son los correctos")
         elif l_freq < 0 | h_freq < 0:
             raise ValueError ("Las frecuencias de corte de los pasa banda no pueden ser menores a cero")
-        if isinstance(notch_freq, (float, int)):
+        if not isinstance(notch_freq, (float, int)):
             raise TypeError ("El tipo de variable de *notch_freq* no es el correcto")
         elif notch_freq < 0:
             raise ValueError ("El valor del *notch_freq* no puede ser menor a cero")
@@ -243,17 +243,17 @@ class RawSignal():
         f_nyq = self.sfreq / 2
         l_freq = l_freq / f_nyq #Se normaliza la frecuencia de corte
         h_freq = h_freq / f_nyq #Se normaliza la frecuencia de corte
-        notch_freq = notch_freq / f_nyq #Se normaliza la frecuencia de corte 
-
+        notch_freq = [(notch_freq-1) / f_nyq, (notch_freq+1) / f_nyq] #Se normaliza la frecuencia de corte 
+        
         new_data = self.data.copy()
 
-        sos_pasa_bajos = signal.butter(order, l_freq, btype='low', output='sos')
-        sos_pasa_altos = signal.butter(order, h_freq, btype='high', output='sos')
-        sos_notch = signal.butter(order, notch_freq, btype='bandstop', output='sos')
+        sos_pasa_bajos = butter(order, h_freq, btype='low', output='sos')
+        sos_pasa_altos = butter(order, l_freq, btype='high', output='sos')
+        sos_notch = butter(order, notch_freq, btype='bandstop', output='sos')
 
-        new_data = signal.sosfiltfilt(sos_pasa_bajos, new_data, axis=1)
-        new_data = signal.sosfiltfilt(sos_pasa_altos, new_data, axis=1)
-        new_data = signal.sosfiltfilt(sos_notch, new_data, axis=1)
+        new_data = sosfiltfilt(sos_pasa_bajos, new_data, axis=1)
+        new_data = sosfiltfilt(sos_pasa_altos, new_data, axis=1)
+        new_data = sosfiltfilt(sos_notch, new_data, axis=1)
         
         return RawSignal(data=new_data, sfreq=self.sfreq, first_samp=self.first_samp, info=self.info, anotaciones=self.anotaciones)
 
@@ -287,10 +287,10 @@ class RawSignal():
         #implementar:
         #nueva_anotacion = self.anotaciones.copy()
         
-        if isinstance(picks, str):
+        if isinstance(picks, (str, int)):
             info.ch_names = [picks] if picks in info.ch_names else ValueError ("El canal no se encontró", picks)
             info.ch_types = info.ch_types[info.ch_names.index(picks)]
-            return RawSignal(data=self.get_data(picksstart=0, stop=self.data.shape[1]), sfreq=self.sfreq, first_samp=self.first_samp, info=info, anotaciones=self.anotaciones)
+            return RawSignal(data=self.get_data(picks, start=0, stop=self.data.shape[1]), sfreq=self.sfreq, first_samp=self.first_samp, info=info, anotaciones=self.anotaciones)
         elif isinstance(picks, (list, tuple, np.ndarray)):
             info.ch_names = [canal for canal in picks if canal in info.ch_names]
             info.ch_types = [info.ch_types[0]] * len(info.ch_names)
@@ -368,4 +368,57 @@ class RawSignal():
         elif isinstance(key, (str, int, list)):
             return self.get_data(picks=key, times=True)
 
+    def espectro_potencias(self, metodo='welch', nperseg : int = 256, plot = False):
+        """
+        Calcula el espectro de potencias de la señal.
+        
+        Parámetros:
+        - metodo: str, 'welch' (método de Welch) o 'fft' (FFT directa).
+        - duracion: int, longitud de cada segmento para el método de Welch (default: 256).
+        - plot: bool, si es *True* plotea los espectros de potencia.
+        
+        Retorna:
+        - frecuencias: ndarray, frecuencias correspondientes al espectro.
+        - psd: ndarray, forma [canales, frecuencias], espectro de potencias.
+        """
+        n_canales, n_muestras = self.data.shape
 
+        if metodo == 'welch':
+            # Usar el método de Welch
+            frecuencias, psd = welch(self.data, fs=self.sfreq, nperseg=nperseg, axis=1, return_onesided=True)
+
+            if plot:
+                plt.figure(figsize=(10, 6))
+                for i in range(n_canales):
+                    plt.semilogy(frecuencias, psd[i], label=f'Canal {i+1}')
+                plt.xlabel('Frecuencia (Hz)')
+                plt.ylabel('Densidad Espectral de Potencia (V²/Hz)')
+                plt.title('Espectro de Potencias (Método de Welch)')
+                plt.grid(True)
+                plt.legend()
+                plt.show()
+
+            return frecuencias, psd
+        
+        elif metodo == 'fft':
+            # Calcular FFT directa
+            
+            frecuencias = np.fft.rfftfreq(n_muestras, d=1/self.sfreq)  # Frecuencias positivas
+            fft_result = np.fft.rfft(self.data, axis=1)   # FFT de cada canal
+            psd = np.abs(fft_result)**2 / n_muestras           # Espectro de potencias (normalizado)
+            
+            if plot:
+                plt.figure(figsize=(10, 6))
+                for i in range(n_canales):
+                    plt.plot(frecuencias, 10 * np.log10(psd[i]), label=f'Canal {i+1}')
+                plt.xlabel('Frecuencia (Hz)')
+                plt.ylabel('Potencia (dB/Hz)')
+                plt.title('Espectro de Potencias (dB)')
+                plt.grid(True)
+                plt.legend()
+                plt.show()
+            
+            return frecuencias, psd
+        
+        else:
+            raise ValueError("Método debe ser 'welch' o 'fft'")

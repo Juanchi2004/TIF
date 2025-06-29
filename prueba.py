@@ -110,7 +110,7 @@ signal = RawSignal(eeg, info=info)
 
 ###############################
 ############ picks ############
-
+c1 = signal.pick("c1")
 
 ###############################
 ########## get item ###########
@@ -139,3 +139,29 @@ print(len(c.shape), t.shape, signal.tiempo())
 # # color = (0.2, 0.7, 1)
 
 # signal.plot(picks=signal.info.ch_names[:5], color = color[::2], duration=60)
+
+###############################
+###### esoectro_potencias #####
+
+# frecuencias1, psd1 = c1.espectro_potencias(metodo = "fft",plot=True)
+
+###############################
+############ filter ###########
+
+# c1filtrado = c1.filter(l_freq=1, h_freq=60)
+
+# frecuencia2, psd2 = c1filtrado.espectro_potencias(metodo = "fft", plot=True)
+
+# print(frecuencias1, psd1.shape)
+# print(frecuencia2, psd2.shape)
+
+# plt.semilogy(frecuencias1, psd1[0], label = "sin filtrar")
+# plt.semilogy(frecuencia2, psd2[0], label = "filtrado")
+# plt.xlabel('Frecuencia (Hz)')
+# plt.ylabel('Densidad Espectral de Potencia (V²/Hz)')
+# plt.title('Espectro de Potencias (Método de Welch)')
+# plt.grid(True)
+# plt.legend()
+# plt.show()
+
+
