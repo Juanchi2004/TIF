@@ -17,7 +17,7 @@ with open("Datasets/EEG/s00.csv", "r") as f:
 eeg = np.array(eeg, dtype= float)
 # #Datos de eeg: eeg.shape -> (31000,19)
 # #   - 19 canales (o columnas)
-# #   - 3100 muestras (o filas)
+# #   - 31000 muestras (o filas)
 
 eeg = eeg.T #la traspuesta invierte columnas por filas
 
@@ -46,8 +46,8 @@ eeg = eeg.T #la traspuesta invierte columnas por filas
 
 cambio_canales = {
     1: "c1",
-    2: "Cz",
-    3: "asd"
+    2: "c2",
+    3: "c3"
 }
 
 info.rename_channels(cambio_canales)
@@ -114,17 +114,28 @@ signal = RawSignal(eeg, info=info)
 
 ###############################
 ########## get item ###########
-# canal, tiempo = signal["c1", 10:100]
+canal, tiempo = signal["c1", 10:100]
 
-# print(canal.shape, len(tiempo.shape))
+print(canal.shape, len(tiempo.shape))
 
-# c, t= signal[["c1",18]]
-# print(len(c.shape), t.shape)
+c, t= signal[["c1",18]]
+print(len(c.shape), t.shape, signal.tiempo())
+
+# plt.plot(t[0,:], c[0,:])
+# plt.show()
 
 ###############################
 ############ picks ############
 
-signal_picks = signal.pick(("c1", 18))
+# signal_picks = signal.pick(("c1", 18))
 
-print(signal_picks.info["ch_names"])
-print(signal_picks.data.shape)
+# print(signal_picks.info["ch_names"])
+# print(signal_picks.data.shape)
+
+###############################
+############# plot ############
+
+# color = ("#13e7ff", "#110ec1", "#FF0000", "#26ff00")
+# # color = (0.2, 0.7, 1)
+
+# signal.plot(picks=signal.info.ch_names[:5], color = color[::2], duration=60)

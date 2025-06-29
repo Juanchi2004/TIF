@@ -5,6 +5,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import scipy.signal as signal
 from pda import Info
 
 class RawSignal():
@@ -86,7 +87,7 @@ class RawSignal():
             new_data = new_data[:,np.newaxis].T
 
         if times:
-            return new_data, np.arange((stop-start))
+            return new_data, np.arange((stop-start))[:,np.newaxis].T
             
         return new_data
 
@@ -125,7 +126,7 @@ class RawSignal():
            desde *first_samp* hasta la ultima muestra"""
         return (self.data.shape[1] - self.data[:,:self.first_samp].shape[1])/self.sfreq
 
-    def crop(self, tmin:float=None, tmax:float = None):
+    def crop(self, tmin:float=None, tmax:float = None) -> "RawSignal":
         """
         Obtiene un trozo (Crop) de RawSignal. Limita los datos dentro de RawSignal
         para obtener un nuevo objeto RawSignal pero con una cantidad de muestras recortadas.
@@ -162,6 +163,10 @@ class RawSignal():
         tmax = tmax * self.sfreq
         data = self.get_data(start=tmin, stop=tmax)
 
+
+        # anotaciones_nuevas = self.anotaciones
+        # anotaciones_nuevas #modificar
+
         return RawSignal(data, self.sfreq, self.first_samp, info, self.anotaciones)
 
     def describe(self) -> "pd.DataFrame":
@@ -193,7 +198,7 @@ class RawSignal():
             }
             return pd.DataFrame(data=dataframe) #Para que el indice comience en 1: index= range(1, len(self.info.ch_names)+1)
         except ValueError as vErr:
-            raise ("Ocurrió un error al realizar la acción", vErr)
+            raise ("Ocurrió un error al realizar la acción")
 
     def filter(self, l_freq, h_freq, notch_freq=50., order=4)->"RawSignal":
         """
@@ -226,9 +231,32 @@ class RawSignal():
             - Si el valor de 'notch_freq' no es positivo.
         """
         
+        if not (isinstance(l_freq, (float, int)) or isinstance(h_freq, (float, int))):
+            raise TypeError ("Los tipos de variable de *l_freq* o *h_freq* no son los correctos")
+        elif l_freq < 0 | h_freq < 0:
+            raise ValueError ("Las frecuencias de corte de los pasa banda no pueden ser menores a cero")
+        if isinstance(notch_freq, (float, int)):
+            raise TypeError ("El tipo de variable de *notch_freq* no es el correcto")
+        elif notch_freq < 0:
+            raise ValueError ("El valor del *notch_freq* no puede ser menor a cero")
 
+        f_nyq = self.sfreq / 2
+        l_freq = l_freq / f_nyq #Se normaliza la frecuencia de corte
+        h_freq = h_freq / f_nyq #Se normaliza la frecuencia de corte
+        notch_freq = notch_freq / f_nyq #Se normaliza la frecuencia de corte 
 
-        pass
+        new_data = self.data.copy()
+
+        sos_pasa_bajos = signal.butter(order, l_freq, btype='low', output='sos')
+        sos_pasa_altos = signal.butter(order, h_freq, btype='high', output='sos')
+        sos_notch = signal.butter(order, notch_freq, btype='bandstop', output='sos')
+
+        new_data = signal.sosfiltfilt(sos_pasa_bajos, new_data, axis=1)
+        new_data = signal.sosfiltfilt(sos_pasa_altos, new_data, axis=1)
+        new_data = signal.sosfiltfilt(sos_notch, new_data, axis=1)
+        
+        return RawSignal(data=new_data, sfreq=self.sfreq, first_samp=self.first_samp, info=self.info, anotaciones=self.anotaciones)
+
 
     def pick(self, picks)->"RawSignal":
         """
@@ -267,6 +295,68 @@ class RawSignal():
             info.ch_names = [canal for canal in picks if canal in info.ch_names]
             info.ch_types = [info.ch_types[0]] * len(info.ch_names)
             return RawSignal(data=self.get_data(picks, start=0, stop=self.data.shape[1]), sfreq=self.sfreq, first_samp=self.first_samp, info=info, anotaciones=self.anotaciones)
+
+    def plot(self, picks=None, start=0.0, duration=10.0, show_anotaciones=True, color = None):
+        """
+        Grafica un segmento de la señal fisiológica.
+
+        Parameters
+        ----------
+        picks : str | list of str | list of int, opcional
+            Canal(es) a visualizar. Puede ser:
+            - str: Nombre de un canal.
+            - list[str]: Lista de nombres de canales.
+            - list[int]: Índices de canales.
+            \n  Si es **None**, se grafica todos los canales.
+
+        start : float, opcional
+            Tiempo inicial en segundos desde donde comenzar la visualización
+            (por defecto es **0.0**).
+        
+        duration : float, optional
+            Duración del segmento de la señal a mostrar en segundos.
+            (por defecto es **10.0**).
+        
+        show_anotaciones : bool, optional
+            Si es **True**, se muestran las anotacioens sobre la señal
+            (por defecto es **True**)
+        
+        color : str | list of str
+            Se le asignará el o los colores a los distintos canales.
+            (por defecto **None**, se asignarán colores aleatoriamente).
+        """
+        from collections.abc import Iterable
+        
+        start = int(start * self.sfreq)
+        duration = int(duration * self.sfreq)
+
+        y, x = self[picks, start: duration]
+
+        if picks == None:
+            picks = self.info.ch_names
+
+        if color == None and isinstance(picks, (tuple, list)):
+            color = [self._color_random_hex() for i in range(len(picks))]
+        elif isinstance(color, str) and isinstance(picks, (tuple, list)):
+            color = [color]*len(picks)
+
+        x = x[0,:]/self.sfreq
+        fig, axes = plt.subplots(nrows=y.shape[0], figsize = (25,25))
+        if isinstance(axes, Iterable):
+            for i,canal in enumerate(y):
+                axes[i].plot(x, canal, color = color[i%len(color)], label = picks[i])
+                axes[i].grid(visible=True, alpha = 0.35)                
+        else:
+            axes.plot(x, y[0,:], color = self._color_random_hex(), label = picks)
+            axes.grid(visible=True, alpha = 0.35)
+
+        fig.tight_layout()
+        fig.legend()
+        plt.show()
+
+    def _color_random_hex(self):
+        rgb = np.random.randint(0, 255, 3)  # Valores R, G, B
+        return '#{:02x}{:02x}{:02x}'.format(*rgb)
 
     def __getitem__(self, key):
         if isinstance(key, tuple) and len(key) == 2:
