@@ -29,21 +29,25 @@ info = Info(ch_names=list(range(eeg.shape[0])),
             experimenter="ETCAHRT. Juan Luis",
             subject_info={"edad": 21, "sexo": "M"})
 
-# anotacion = Anotaciones()
-# anotacion.load("Datasets/EEG/eventos_ejemplo.csv")
+anotacion = Anotaciones()
+anotacion.load("Datasets/EEG/eventos_ejemplo.csv")
 
 
 # signal = RawSignal(data= eeg, info= info)#, anotaciones=anotacion
-signal = EEGSignal(data=eeg, info=info)
+signal = EEGSignal(data=eeg, info=info, anotaciones=anotacion)
 
 # signal.tiempo_frecuencia(pick=5, plot=True)
-# signal.plot(show_anotaciones=False)
+# color = ("#13e7ff", "#110ec1", "#FF0000", "#26ff00")
+# signal.plot(picks=(1,2,3,4,5,6),duration=300,show_anotaciones=True, color=color)
+# signal.espectro_potencias(plot=True)
+c1 = signal.pick(1)
+c1.espectro_potencias(plot=True)
 
 # laplacian_signal = signal.filtro_laplaciano(1, (2,3,4,5,6))
 
-a, b, c = signal.hilbert(canales=(1,2), plot=True) #
+# a, b, c = signal.hilbert(canales=(1,2), plot=True) #
 
-print(b.shape)
+# print(b.shape)
 # x = np.arange(b.shape[1])
 # plt.plot(x, b[0], label = "Envolvente", color = "orange")
 # plt.show()

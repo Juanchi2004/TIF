@@ -93,7 +93,7 @@ signal = RawSignal(eeg, info=info)
 ###############################
 ############ Crop ############# 
 
-# signal30 = signal.crop(tmax=30)
+# signal30 = signal.crop(tmin=0.2,tmax=0.7)
 # signal60 = signal.crop(tmax=60)
 
 # print(signal30.data.shape)
@@ -110,16 +110,16 @@ signal = RawSignal(eeg, info=info)
 
 ###############################
 ############ picks ############
-c1 = signal.pick("c1")
+# c1 = signal.pick("c1")
 
 ###############################
 ########## get item ###########
-canal, tiempo = signal["c1", 10:100]
+# canal, tiempo = signal["c1", 10:100]
 
-print(canal.shape, len(tiempo.shape))
+# print(canal.shape, len(tiempo.shape))
 
-c, t= signal[["c1",18]]
-print(len(c.shape), t.shape, signal.tiempo())
+# c, t= signal[["c1",18]]
+# print(len(c.shape), t.shape, signal.tiempo())
 
 # plt.plot(t[0,:], c[0,:])
 # plt.show()
@@ -138,7 +138,7 @@ print(len(c.shape), t.shape, signal.tiempo())
 # color = ("#13e7ff", "#110ec1", "#FF0000", "#26ff00")
 # # color = (0.2, 0.7, 1)
 
-# signal.plot(picks=signal.info.ch_names[:5], color = color[::2], duration=60)
+# signal.plot(picks=signal.info.ch_names[:5], color = color[::2], duration=60, show_anotaciones=False)
 
 ###############################
 ###### esoectro_potencias #####

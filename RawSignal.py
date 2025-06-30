@@ -7,6 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.signal import butter, sosfiltfilt, welch, spectrogram
 from pda import Info
+from Clase_Anotaciones import Anotaciones
 
 class RawSignal():
     """
@@ -164,8 +165,8 @@ class RawSignal():
         info = self.info.copy()
 
          #Se supone que la primera muestra no tiene el valor temporal, sino el indice de la primera muestra
-        tmin = tmin * self.sfreq
-        tmax = tmax * self.sfreq
+        tmin = int(tmin * self.sfreq)
+        tmax = int(tmax * self.sfreq)   
         data = self.get_data(start=tmin, stop=tmax)
 
 
@@ -362,12 +363,17 @@ class RawSignal():
                 
             duration = duration / self.sfreq
             for _,fila in eventos.iterrows():
-                for ax in axes:
-                    if fila["onset"] < duration:
-                        ax.axvline(fila["onset"], color = "r", linestyle = "--")
-                        ax.text(fila["onset"], 1.0, fila["event_id"], rotation=90, color = "r", va='bottom')
-                    else: 
-                        break
+                if isinstance(axes, Iterable):
+                    for ax in axes:
+                        if fila["onset"] < duration:
+                            ax.axvline(fila["onset"], color = "r", linestyle = "--")
+                            ax.text(fila["onset"], 1.0, fila["event_id"], rotation=90, color = "r", va='bottom')
+                        else: 
+                            break
+                else:
+                    axes.axvlines(fila["onset"], color = "r", linestyle = "--")
+                    axes.text(fila["onset"], 1.0, fila["event_id"], rotation=90, color = "r", va='bottom')
+                        
 
         fig.tight_layout()
         fig.legend()
