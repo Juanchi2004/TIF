@@ -5,7 +5,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.signal import butter, sosfiltfilt, welch
+from scipy.signal import butter, sosfiltfilt, welch, spectrogram
 from pda import Info
 
 class RawSignal():
@@ -26,6 +26,11 @@ class RawSignal():
         if first_samp not in range(len(data[0,:])):
             raise ValueError (f"La muestra: {first_samp} está fuera de rango")
 
+        if info == None:
+            info = Info(ch_names=list(range(data.shape[0])))
+        elif len(info.ch_names) != data.shape[0]:
+            raise ValueError (f"La cantidad de canales de Info.ch_names no coincide con la de data\n",
+                              f"len(Info.ch_names)={len(info.ch_names)} != data.shape[0]={data.shape[0]}" )
         self.data = data #Matriz 2D de forma (n_canales, n_muestras)
         self.sfreq = sfreq
         self.first_samp = first_samp
@@ -340,7 +345,7 @@ class RawSignal():
             color = [color]*len(picks)
 
         x = x[0,:]/self.sfreq
-        fig, axes = plt.subplots(nrows=y.shape[0], figsize = (25,25))
+        fig, axes = plt.subplots(nrows=y.shape[0], figsize = (25, 6 * y.shape[0]))
         if isinstance(axes, Iterable):
             for i,canal in enumerate(y):
                 axes[i].plot(x, canal, color = color[i%len(color)], label = picks[i])
@@ -436,3 +441,53 @@ class RawSignal():
         
         else:
             raise ValueError("Método debe ser 'welch' o 'fft'")
+
+    def tiempo_frecuencia(self, pick, plot = True):    
+        """
+        Este metodo permite obtener el espectrograma tiempo-frecuencia de la señal para un unico canal
+        -----------
+
+        Parameters
+        ----------
+        pick : str | int
+            - Se espera que le pase el nombre del canal a realizar el espectrograma.
+        
+        plot : bool = True
+            - Si esta argumento se encuetra en *True* grafica automaticamente el espectrograma.
+        
+        Retunrs
+        -------
+        frecuencias
+            - **Tipo**: Arreglo NumPy 1D.
+            - **Contenido**: Frecuencias (en Hz) correspondientes al eje Y del espectrograma.
+            - **Rango**: Va de 0 a *sfreq*/2
+        
+        tiempos
+            - **Tipo**: Arreglo NumPy 1D.
+            - **Contenido**: Puntos en el tiempo (en segundos) correspondientes al eje X del espectrograma.
+        
+        Sxx
+            - **Tipo**: Arreglo NumPy 2D, forma [frecuencias, tiempos]
+            - **Contenido**: Densidad espectral de potencia (en unidades de V²/Hz) para cada frecuencia y tiempo.
+        
+        """
+
+        from collections.abc import Iterable
+        if not isinstance(pick, (str, int)) and isinstance(pick, Iterable) and len(pick) >= 2:
+            raise ValueError("Esta función solo es valida para un canal en particular.")
+        
+        datos = self.get_data(picks=pick, stop=self.data.shape[1])
+
+        frecuencias, tiempos, Sxx = spectrogram(datos[0], fs=self.sfreq, nperseg=128, noverlap=64)
+
+        if plot:
+            plt.figure(figsize=(10, 6))
+            plt.pcolormesh(tiempos, frecuencias, 10 * np.log10(Sxx), shading='auto', cmap='inferno')
+            plt.colorbar(label='Potencia (dB)')
+            plt.ylabel('Frecuencia (Hz)')
+            plt.xlabel('Tiempo (s)')
+            plt.title(f'Espectrograma (Tiempo-Frecuencia) - Canal {pick}')
+            plt.ylim(0, self.sfreq/2)  # Limitar a la frecuencia de Nyquist
+            plt.show()
+        
+        return frecuencias, tiempos, Sxx
